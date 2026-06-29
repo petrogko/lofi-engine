@@ -25,6 +25,9 @@
   import Noise from "../lib/engine/Drums/Noise";
   import Snare from "../lib/engine/Drums/Snare";
   import Piano from "../lib/engine/Piano/Piano";
+  import { createLofiChain } from "../lib/engine/fx/lofiChain";
+  import { createReverb } from "../lib/engine/fx/Reverb";
+  import { createVinylCrackle } from "../lib/engine/fx/VinylCrackle";
   import Bass from "../lib/engine/Bass/Bass";
   import { bassHitsForBar } from "../lib/engine/Bass/bassHelpers";
   import {
@@ -55,7 +58,14 @@
   });
   const lpf = new Tone.Filter(MASTER_LPF_BASE_CUTOFF, "lowpass");
   const vol = new Tone.Volume(linearToDb(get(volumes).main_track));
-  Tone.getDestination().chain(cmp, lpf, vol);
+  // Lo-fi "tape character" master FX (wow/flutter, saturation, darker EQ, a
+  // tempo-synced pump) plus a subtle reverb, spliced inline after the glue
+  // compressor and before the final low-pass + master volume. Every perceptual
+  // amount lives as a tunable constant inside each fx/ module (tune by ear).
+  const lofiFx = createLofiChain();
+  const reverbFx = createReverb();
+  const vinylCrackle = createVinylCrackle();
+  Tone.getDestination().chain(cmp, ...lofiFx.nodes, reverbFx.node, lpf, vol);
   // Keep the master volume in sync with the store (PERF-3) — replaces the old
   // 100ms localStorage poll.
   $: vol.volume.value = linearToDb($volumes.main_track);
@@ -217,6 +227,10 @@
     });
     // Dispose the synth bass (GEN-2/BUG-9).
     if (bass) bass.dispose();
+    // Dispose the lo-fi master FX + vinyl crackle (Wave 4).
+    lofiFx.dispose();
+    reverbFx.dispose();
+    vinylCrackle.dispose();
   });
 
   let barCount = 0;
@@ -447,12 +461,16 @@
     progress = 0;
     if (Tone.Transport.state === "started") {
       noise.stop();
+      lofiFx.stop();
+      vinylCrackle.stop();
       Tone.Transport.stop();
       isPlaying = false;
     } else {
       Tone.start();
       Tone.Transport.start();
       noise.start(0);
+      lofiFx.start();
+      vinylCrackle.start();
       chords.start(0);
       melody.start(0);
       kickLoop.start(0);

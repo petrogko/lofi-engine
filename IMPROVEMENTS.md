@@ -38,6 +38,13 @@ Implemented by four file-disjoint agents and centrally verified:
     indices and look up the current pattern, so each section swaps to a new groove (the original groove is set 0).
   - **GEN-7** — `Chord.generateVoicing` gained opt-in inversions/extensions and a `pickVelocity()` for per-chord
     dynamics; `playChord` uses them so the comping isn't mechanically uniform.
+- **DONE (Wave 4 — lo-fi "character" DSP, beyond the original backlog; built as isolated `engine/fx/` modules):**
+  - **Tape character** (`fx/lofiChain.ts`) — gentle saturation, wow/flutter (Vibrato), a darker EQ, and a
+    tempo-synced pump, spliced inline into the master chain.
+  - **Reverb** (`fx/Reverb.ts`) — a subtle room/depth send (mostly dry).
+  - **Vinyl crackle** (`fx/VinylCrackle.ts`) — a quiet dust bed + sparse random clicks, started with playback.
+  - NOTE: every perceptual amount is a tunable constant in its module; the defaults are conservative but the mix
+    balance is **unauditioned in CI and wants listening-based tuning**.
 
 ---
 
